@@ -105,6 +105,7 @@ public class RNMultiImagePickerModule extends ReactContextBaseJavaModule impleme
     public void openPicker(ReadableMap params, Promise promise) {
         setConfigurations(params);
         resultCollector.setup(promise, maxNum > 1);
+        openGallary();
     }
 
     @Override
