@@ -37,7 +37,20 @@
     ```
       maven { url "https://jitpack.io" }
     ```
+5. Create xml directory under `android/app/src/main/res/`,and create file `file_paths_public.xml`
 
+6. Insert the following lines inside the <application> label in `android/app/src/main/AndroidManifest.xml`:
+    ```
+      <provider
+           android:name="android.support.v4.content.FileProvider"
+           android:authorities="com.sample.fileprovider"
+           android:exported="false"
+           android:grantUriPermissions="true">
+           <meta-data
+                 android:name="android.support.FILE_PROVIDER_PATHS"
+                 android:resource="@xml/file_paths_public"></meta-data>
+      </provider>
+    ```
 ## Usage
 ```javascript
 import RNMultiImagePicker from 'react-native-multi-image-picker';
