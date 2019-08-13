@@ -75,8 +75,6 @@ public class RNMultiImagePickerModule extends ReactContextBaseJavaModule impleme
     private boolean enableRotationGesture = false;
     private boolean disableCropperColorSetters = false;
 
-    private String authority = "";
-
     private String captureDir = "";
 
     private ReadableMap options;
@@ -108,47 +106,12 @@ public class RNMultiImagePickerModule extends ReactContextBaseJavaModule impleme
         openGallary();
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK) {
-            if (requestCode == REQUEST_CODE_CHOOSE) {
-                Log.e("OnActivityResult ", String.valueOf(Matisse.obtainOriginalState(data)));
-                Log.e("OnActivityResult ", Matisse.obtainResult(data).get(0).toString());
-                Log.e("OnActivityResult ", Matisse.obtainPathResult(data).get(0));
-                Activity activity = getCurrentActivity();
-                Uri firstUri = Matisse.obtainResult(data).get(0);
-                if (activity != null && firstUri != null) {
-                    if (cropping) {
-                        startCropping(activity, firstUri);
-                    } else {
-                        try {
-                            resultCollector.notifySuccess(getImage(activity, RealPathUtil.getRealPathFromURI(activity, firstUri)));
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            } else if (requestCode == UCrop.REQUEST_CROP) {
-                final Uri resultUri = UCrop.getOutput(data);
-                if (resultUri != null) {
-                    Log.e("OnActivityResult crop", resultUri.toString());
-                }
-            }
-        } else if (resultCode == UCrop.RESULT_ERROR) {
-            final Throwable cropError = UCrop.getError(data);
-            if (cropError != null) {
-                Log.e("OnActivityResult crop", cropError.getLocalizedMessage());
-            }
-        } else if (resultCode == Activity.RESULT_CANCELED) {
-            resultCollector.notifyProblem(E_PICKER_CANCELLED_KEY, E_PICKER_CANCELLED_MSG);
-        }
-    }
-
     public void setConfigurations(ReadableMap options) {
         cropping = options.hasKey("cropping") && options.getBoolean("cropping");
         cropWidth = options.hasKey("cropWidth") ? options.getInt("cropWidth") : cropWidth;
         cropHeight = options.hasKey("cropHeight") ? options.getInt("cropHeight") : cropHeight;
         maxNum = options.hasKey("maxNum") ? options.getInt("maxNum") : maxNum;
+        captureDir = options.hasKey("captureDir") ? options.getString("captureDir") : "picture";
         cropperActiveWidgetColor = options.hasKey("cropperActiveWidgetColor") ? options.getString("cropperActiveWidgetColor") : DEFAULT_TINT;
         cropperStatusBarColor = options.hasKey("cropperStatusBarColor") ? options.getString("cropperStatusBarColor") : DEFAULT_TINT;
         cropperToolbarColor = options.hasKey("cropperToolbarColor") ? options.getString("cropperToolbarColor") : DEFAULT_TINT;
@@ -165,63 +128,68 @@ public class RNMultiImagePickerModule extends ReactContextBaseJavaModule impleme
     public void openGallary() {
         final Activity activity = getCurrentActivity();
         if (activity != null) {
-            RxPermissions rxPermissions = new RxPermissions(activity);
-            rxPermissions.request(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA)
-                    .subscribe(new Observer<Boolean>() {
-                        @Override
-                        public void onSubscribe(Disposable d) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    RxPermissions rxPermissions = new RxPermissions(activity);
+                    rxPermissions.request(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA)
+                            .subscribe(new Observer<Boolean>() {
+                                @Override
+                                public void onSubscribe(Disposable d) {
 
-                        }
+                                }
 
-                        @Override
-                        public void onNext(Boolean aBoolean) {
-                            if (aBoolean) {
-                                Matisse.from(activity)
-                                        .choose(MimeType.ofAll(), false)
-                                        .theme(R.style.Matisse_Zhihu)
-                                        .countable(true)
-                                        .capture(true)
-                                        .captureStrategy(
-                                                new CaptureStrategy(true, authority, captureDir))
-                                        .maxSelectable(maxNum)
-                                        .addFilter(new GifSizeFilter(10, 10, 5 * Filter.K * Filter.K))
-                                        .gridExpectedSize(
-                                                activity.getResources().getDimensionPixelSize(R.dimen.grid_expected_size))
-                                        .restrictOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
-                                        .thumbnailScale(0.85f)
+                                @Override
+                                public void onNext(Boolean aBoolean) {
+                                    if (aBoolean) {
+                                        Matisse.from(activity)
+                                                .choose(MimeType.ofAll(), false)
+                                                .theme(R.style.Matisse_Zhihu)
+                                                .countable(true)
+                                                .capture(true)
+                                                .captureStrategy(
+                                                        new CaptureStrategy(true, activity.getPackageName()+".fileprovider", captureDir))
+                                                .maxSelectable(maxNum)
+                                                .addFilter(new GifSizeFilter(10, 10, 5 * Filter.K * Filter.K))
+                                                .gridExpectedSize(
+                                                        activity.getResources().getDimensionPixelSize(R.dimen.grid_expected_size))
+                                                .restrictOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                                                .thumbnailScale(0.85f)
 //                                            .imageEngine(new GlideEngine())  // for glide-V3
-                                        .imageEngine(new Glide4Engine())    // for glide-V4
-                                        .setOnSelectedListener(new OnSelectedListener() {
-                                            @Override
-                                            public void onSelected(@NonNull List<Uri> uriList, @NonNull List<String> pathList) {
-                                            }
-                                        })
-                                        .originalEnable(true)
-                                        .maxOriginalSize(10)
-                                        .autoHideToolbarOnSingleTap(true)
-                                        .setOnCheckedListener(new OnCheckedListener() {
-                                            @Override
-                                            public void onCheck(boolean isChecked) {
-                                                Log.i("onCheck", "onCheck: " + isChecked);
-                                            }
-                                        })
-                                        .forResult(REQUEST_CODE_CHOOSE);
-                            } else {
-                                Toast.makeText(activity, R.string.permission_request_denied, Toast.LENGTH_LONG)
-                                        .show();
-                            }
-                        }
+                                                .imageEngine(new Glide4Engine())    // for glide-V4
+                                                .setOnSelectedListener(new OnSelectedListener() {
+                                                    @Override
+                                                    public void onSelected(@NonNull List<Uri> uriList, @NonNull List<String> pathList) {
+                                                    }
+                                                })
+                                                .originalEnable(true)
+                                                .maxOriginalSize(10)
+                                                .autoHideToolbarOnSingleTap(true)
+                                                .setOnCheckedListener(new OnCheckedListener() {
+                                                    @Override
+                                                    public void onCheck(boolean isChecked) {
+                                                        Log.i("onCheck", "onCheck: " + isChecked);
+                                                    }
+                                                })
+                                                .forResult(REQUEST_CODE_CHOOSE);
+                                    } else {
+                                        Toast.makeText(activity, R.string.permission_request_denied, Toast.LENGTH_LONG)
+                                                .show();
+                                    }
+                                }
 
-                        @Override
-                        public void onError(Throwable e) {
+                                @Override
+                                public void onError(Throwable e) {
 
-                        }
+                                }
 
-                        @Override
-                        public void onComplete() {
+                                @Override
+                                public void onComplete() {
 
-                        }
-                    });
+                                }
+                            });
+                }
+            });
         }
     }
 
@@ -323,4 +291,48 @@ public class RNMultiImagePickerModule extends ReactContextBaseJavaModule impleme
     }
 
 
+    @Override
+    public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK) {
+            if (requestCode == REQUEST_CODE_CHOOSE) {
+                Log.e("OnActivityResult ", String.valueOf(Matisse.obtainOriginalState(data)));
+                Log.e("OnActivityResult ", Matisse.obtainResult(data).get(0).toString());
+                Log.e("OnActivityResult ", Matisse.obtainPathResult(data).get(0));
+                Uri firstUri = Matisse.obtainResult(data).get(0);
+                if (activity != null && firstUri != null) {
+                    if (cropping) {
+                        startCropping(activity, firstUri);
+                    } else {
+                        try {
+                            resultCollector.notifySuccess(getImage(activity, RealPathUtil.getRealPathFromURI(activity, firstUri)));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            } else if (requestCode == UCrop.REQUEST_CROP) {
+                final Uri resultUri = UCrop.getOutput(data);
+                if (resultUri != null) {
+                    Log.e("OnActivityResult crop", resultUri.toString());
+                    try {
+                        resultCollector.notifySuccess(getImage(activity, RealPathUtil.getRealPathFromURI(activity, resultUri)));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        } else if (resultCode == UCrop.RESULT_ERROR) {
+            final Throwable cropError = UCrop.getError(data);
+            if (cropError != null) {
+                Log.e("OnActivityResult crop", cropError.getLocalizedMessage());
+            }
+        } else if (resultCode == Activity.RESULT_CANCELED) {
+            resultCollector.notifyProblem(E_PICKER_CANCELLED_KEY, E_PICKER_CANCELLED_MSG);
+        }
+    }
+
+    @Override
+    public void onNewIntent(Intent intent) {
+
+    }
 }
