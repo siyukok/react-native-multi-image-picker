@@ -4,7 +4,7 @@ const {RNMultiImagePicker} = NativeModules;
 
 // export default RNMultiImagePicker;
 export default class MultiImagePicker {
-    static openPicker() {
-        return RNMultiImagePicker.openPicker();
+    static openPicker(params) {
+        return RNMultiImagePicker.openPicker(params);
     }
 }

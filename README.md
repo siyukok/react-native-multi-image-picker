@@ -33,7 +33,7 @@
   	```
       compile project(':react-native-multi-image-picker')
   	```
-
+4. If build error with Ucrop not found,add 'maven { url "https://jitpack.io" }' to your android project build.gradle
 
 ## Usage
 ```javascript
@@ -42,4 +42,3 @@ import RNMultiImagePicker from 'react-native-multi-image-picker';
 // TODO: What to do with the module?
 RNMultiImagePicker;
 ```
-  
