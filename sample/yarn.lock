@@ -4870,10 +4870,10 @@ react-is@^16.8.1, react-is@^16.8.3, react-is@^16.8.4:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.9.0.tgz#21ca9561399aad0ff1a7701c01683e8ca981edcb"
   integrity sha512-tJBzzzIgnnRfEm046qRcURvwQnZVXmuCbscxUO5RWrGTXpon2d4c8mI0D8WE6ydVIm29JiLB6+RslkIvym9Rjw==
 
-react-native-multi-image-picker@^1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/react-native-multi-image-picker/-/react-native-multi-image-picker-1.0.2.tgz#14fcbd8360c95bdc996aa1afa013df1eeeca37f0"
-  integrity sha512-jJibYxS0/HPZzUg8BTqsAoBfw5OIUiRJPt3d+f78okBpnvPCr+D4pNvcBw65lec5zW0eziGdYhb87+KjP844mA==
+react-native-multi-image-picker@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/react-native-multi-image-picker/-/react-native-multi-image-picker-1.0.5.tgz#5a865d2a7f0de95374c54d7e53047672d6ff1965"
+  integrity sha512-lo2Iax0mI5Y2AJtyZdH54gppSpkDAUO2KKSBul4Ee4KtI6O2LhDbQAZUKnAs4YPZXxODUPWIMDPsvl1zkGnCpg==
 
 react-native@0.59.5:
   version "0.59.5"
