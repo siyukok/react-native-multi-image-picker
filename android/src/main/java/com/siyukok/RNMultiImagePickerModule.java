@@ -11,6 +11,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -37,7 +38,9 @@ import com.zhihu.matisse.listener.OnCheckedListener;
 import com.zhihu.matisse.listener.OnSelectedListener;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import io.reactivex.Observer;
@@ -55,8 +58,19 @@ public class RNMultiImagePickerModule extends ReactContextBaseJavaModule impleme
     private static final String E_PICKER_CANCELLED_KEY = "E_PICKER_CANCELLED";
     private static final String E_PICKER_CANCELLED_MSG = "User cancelled image selection";
 
+    //user error
+    private static final String E_PICKER_ERROR_KEY = "E_PICKER_ERROR";
+    private static final String E_PICKER_ERROR_MSG_1 = "UNKNOWN ERROR 1001";
+    private static final String E_PICKER_ERROR_MSG_2 = "UNKNOWN ERROR 1002";
+    private static final String E_PICKER_ERROR_MSG_3 = "UNKNOWN ERROR 1003";
+    private static final String E_PICKER_ERROR_MSG_4 = "UNKNOWN ERROR 1004";
+    private static final String E_PICKER_ERROR_MSG_5 = "UNKNOWN ERROR 1005";
+
     //Light Blue 500
     private static final String DEFAULT_WIDGET_COLOR = "#03A9F4";
+
+    //
+    private String mimeType = "image";
 
     private ResultCollector resultCollector = new ResultCollector();
 
@@ -108,10 +122,11 @@ public class RNMultiImagePickerModule extends ReactContextBaseJavaModule impleme
 
     public void setConfigurations(ReadableMap options) {
         cropping = options.hasKey("cropping") && options.getBoolean("cropping");
-        cropWidth = options.hasKey("cropWidth") ? options.getInt("cropWidth") : cropWidth;
-        cropHeight = options.hasKey("cropHeight") ? options.getInt("cropHeight") : cropHeight;
-        maxNum = options.hasKey("maxNum") ? options.getInt("maxNum") : maxNum;
+        cropWidth = options.hasKey("cropWidth") ? options.getInt("cropWidth") : 400;
+        cropHeight = options.hasKey("cropHeight") ? options.getInt("cropHeight") : 400;
+        maxNum = options.hasKey("maxNum") ? options.getInt("maxNum") : 1;
         captureDir = options.hasKey("captureDir") ? options.getString("captureDir") : "picture";
+        mimeType = options.hasKey("mimeType") ? options.getString("mimeType") : "image";
         cropperActiveWidgetColor = options.hasKey("cropperActiveWidgetColor") ? options.getString("cropperActiveWidgetColor") : DEFAULT_TINT;
         cropperStatusBarColor = options.hasKey("cropperStatusBarColor") ? options.getString("cropperStatusBarColor") : DEFAULT_TINT;
         cropperToolbarColor = options.hasKey("cropperToolbarColor") ? options.getString("cropperToolbarColor") : DEFAULT_TINT;
@@ -142,13 +157,25 @@ public class RNMultiImagePickerModule extends ReactContextBaseJavaModule impleme
                                 @Override
                                 public void onNext(Boolean aBoolean) {
                                     if (aBoolean) {
+                                        Set<MimeType> mimeTypes = new HashSet<>();
+                                        switch (mimeType) {
+                                            case "image":
+                                                mimeTypes = MimeType.ofImage();
+                                                break;
+                                            case "staticImage":
+                                                mimeTypes = MimeType.of(MimeType.JPEG, MimeType.PNG, MimeType.WEBP, MimeType.BMP);
+                                                break;
+                                            default:
+                                                mimeTypes = MimeType.ofImage();
+                                                break;
+                                        }
                                         Matisse.from(activity)
-                                                .choose(MimeType.ofImage(), false)
+                                                .choose(mimeTypes, false)
                                                 .theme(R.style.Matisse_Zhihu)
                                                 .countable(true)
                                                 .capture(true)
                                                 .captureStrategy(
-                                                        new CaptureStrategy(true, activity.getPackageName()+".fileprovider", "test"))
+                                                        new CaptureStrategy(true, activity.getPackageName() + ".fileprovider", "test"))
                                                 .maxSelectable(maxNum)
                                                 .addFilter(new GifSizeFilter(10, 10, 5 * Filter.K * Filter.K))
                                                 .gridExpectedSize(
@@ -180,7 +207,7 @@ public class RNMultiImagePickerModule extends ReactContextBaseJavaModule impleme
 
                                 @Override
                                 public void onError(Throwable e) {
-
+                                    resultCollector.notifyProblem(E_PICKER_ERROR_KEY, E_PICKER_ERROR_MSG_1);
                                 }
 
                                 @Override
@@ -283,6 +310,7 @@ public class RNMultiImagePickerModule extends ReactContextBaseJavaModule impleme
                 WritableMap exif = ExifExtractor.extract(path);
                 image.putMap("exif", exif);
             } catch (Exception ex) {
+                resultCollector.notifyProblem(E_PICKER_ERROR_KEY, E_PICKER_ERROR_MSG_2);
                 ex.printStackTrace();
             }
         }
@@ -306,6 +334,7 @@ public class RNMultiImagePickerModule extends ReactContextBaseJavaModule impleme
                         try {
                             resultCollector.notifySuccess(getImage(activity, RealPathUtil.getRealPathFromURI(activity, firstUri)));
                         } catch (Exception e) {
+                            resultCollector.notifyProblem(E_PICKER_ERROR_KEY, E_PICKER_ERROR_MSG_3);
                             e.printStackTrace();
                         }
                     }
@@ -317,6 +346,7 @@ public class RNMultiImagePickerModule extends ReactContextBaseJavaModule impleme
                     try {
                         resultCollector.notifySuccess(getImage(activity, RealPathUtil.getRealPathFromURI(activity, resultUri)));
                     } catch (Exception e) {
+                        resultCollector.notifyProblem(E_PICKER_ERROR_KEY, E_PICKER_ERROR_MSG_4);
                         e.printStackTrace();
                     }
                 }
@@ -324,7 +354,7 @@ public class RNMultiImagePickerModule extends ReactContextBaseJavaModule impleme
         } else if (resultCode == UCrop.RESULT_ERROR) {
             final Throwable cropError = UCrop.getError(data);
             if (cropError != null) {
-                Log.e("OnActivityResult crop", cropError.getLocalizedMessage());
+                resultCollector.notifyProblem(E_PICKER_ERROR_KEY, E_PICKER_ERROR_MSG_5);
             }
         } else if (resultCode == Activity.RESULT_CANCELED) {
             resultCollector.notifyProblem(E_PICKER_CANCELLED_KEY, E_PICKER_CANCELLED_MSG);
