@@ -111,7 +111,7 @@ public class RNMultiImagePickerModule extends ReactContextBaseJavaModule impleme
         cropWidth = options.hasKey("cropWidth") ? options.getInt("cropWidth") : cropWidth;
         cropHeight = options.hasKey("cropHeight") ? options.getInt("cropHeight") : cropHeight;
         maxNum = options.hasKey("maxNum") ? options.getInt("maxNum") : maxNum;
-//         captureDir = options.hasKey("captureDir") ? options.getString("captureDir") : "picture";
+        captureDir = options.hasKey("captureDir") ? options.getString("captureDir") : "picture";
         cropperActiveWidgetColor = options.hasKey("cropperActiveWidgetColor") ? options.getString("cropperActiveWidgetColor") : DEFAULT_TINT;
         cropperStatusBarColor = options.hasKey("cropperStatusBarColor") ? options.getString("cropperStatusBarColor") : DEFAULT_TINT;
         cropperToolbarColor = options.hasKey("cropperToolbarColor") ? options.getString("cropperToolbarColor") : DEFAULT_TINT;
@@ -143,12 +143,12 @@ public class RNMultiImagePickerModule extends ReactContextBaseJavaModule impleme
                                 public void onNext(Boolean aBoolean) {
                                     if (aBoolean) {
                                         Matisse.from(activity)
-                                                .choose(MimeType.ofAll(), false)
+                                                .choose(MimeType.ofImage(), false)
                                                 .theme(R.style.Matisse_Zhihu)
                                                 .countable(true)
                                                 .capture(true)
                                                 .captureStrategy(
-                                                        new CaptureStrategy(true, activity.getPackageName() + ".fileprovider", "test"))
+                                                        new CaptureStrategy(true, activity.getPackageName()+".fileprovider", "test"))
                                                 .maxSelectable(maxNum)
                                                 .addFilter(new GifSizeFilter(10, 10, 5 * Filter.K * Filter.K))
                                                 .gridExpectedSize(
