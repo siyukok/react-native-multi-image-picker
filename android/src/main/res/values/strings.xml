@@ -1,4 +1,5 @@
 <resources>
-    <string name="error_gif">x or y bound size should be at least %1$dpx and file size should be no more than %2$sM</string>
+    <string name="error_gif">图片大小超过%2$sM，暂不支持上传</string>
     <string name="permission_request_denied">Permission request denied</string>
 </resources>
+
